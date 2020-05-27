@@ -91,7 +91,7 @@ module.exports = function(grunt) {
     },
     uglify: {
       options: {
-        mangle: true,
+        mangle: false,
         preserveComments: false,
         banner: grunt.file.read('lib/license_header.js').replace(/__VERSION__/, version)
       },
@@ -106,7 +106,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks("grunt-saucelabs");
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-uglify-es');
 
   // A task to cause Grunt to sit and wait, keeping the test server running
   grunt.registerTask("wait", function() {

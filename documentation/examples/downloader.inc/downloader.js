@@ -1,8 +1,5 @@
 
 var Promise = window.Promise;
-if (!Promise) {
-    Promise = JSZip.external.Promise;
-}
 
 /**
  * Fetch the content and return the associated promise.

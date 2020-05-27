@@ -1,6 +1,6 @@
 /*!
 
-JSZip v3.3.0 - A JavaScript class for generating and reading zip files
+JSZip v3.4.0 - A JavaScript class for generating and reading zip files
 <http://stuartk.com/jszip>
 
 (c) 2009-2016 Stuart Knightley <stuart [at] stuartk.com>
@@ -118,10 +118,9 @@ exports.decode = function(input) {
     return output;
 };
 
-},{"./support":30,"./utils":32}],2:[function(require,module,exports){
+},{"./support":29,"./utils":31}],2:[function(require,module,exports){
 'use strict';
 
-var external = require("./external");
 var DataWorker = require('./stream/DataWorker');
 var DataLengthProbe = require('./stream/DataLengthProbe');
 var Crc32Probe = require('./stream/Crc32Probe');
@@ -150,7 +149,7 @@ CompressedObject.prototype = {
      * @return {GenericWorker} the worker.
      */
     getContentWorker : function () {
-        var worker = new DataWorker(external.Promise.resolve(this.compressedContent))
+        var worker = new DataWorker(Promise.resolve(this.compressedContent))
         .pipe(this.compression.uncompressWorker())
         .pipe(new DataLengthProbe("data_length"));
 
@@ -167,7 +166,7 @@ CompressedObject.prototype = {
      * @return {GenericWorker} the worker.
      */
     getCompressedWorker : function () {
-        return new DataWorker(external.Promise.resolve(this.compressedContent))
+        return new DataWorker(Promise.resolve(this.compressedContent))
         .withStreamInfo("compressedSize", this.compressedSize)
         .withStreamInfo("uncompressedSize", this.uncompressedSize)
         .withStreamInfo("crc32", this.crc32)
@@ -195,7 +194,7 @@ CompressedObject.createWorkerFrom = function (uncompressedWorker, compression, c
 
 module.exports = CompressedObject;
 
-},{"./external":6,"./stream/Crc32Probe":25,"./stream/DataLengthProbe":26,"./stream/DataWorker":27}],3:[function(require,module,exports){
+},{"./stream/Crc32Probe":24,"./stream/DataLengthProbe":25,"./stream/DataWorker":26}],3:[function(require,module,exports){
 'use strict';
 
 var GenericWorker = require("./stream/GenericWorker");
@@ -211,7 +210,7 @@ exports.STORE = {
 };
 exports.DEFLATE = require('./flate');
 
-},{"./flate":7,"./stream/GenericWorker":28}],4:[function(require,module,exports){
+},{"./flate":6,"./stream/GenericWorker":27}],4:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -290,7 +289,7 @@ module.exports = function crc32wrapper(input, crc) {
     }
 };
 
-},{"./utils":32}],5:[function(require,module,exports){
+},{"./utils":31}],5:[function(require,module,exports){
 'use strict';
 exports.base64 = false;
 exports.binary = false;
@@ -304,27 +303,6 @@ exports.unixPermissions = null;
 exports.dosPermissions = null;
 
 },{}],6:[function(require,module,exports){
-/* global Promise */
-'use strict';
-
-// load the global object first:
-// - it should be better integrated in the system (unhandledRejection in node)
-// - the environment may have a custom Promise implementation (see zone.js)
-var ES6Promise = null;
-if (typeof Promise !== "undefined") {
-    ES6Promise = Promise;
-} else {
-    ES6Promise = require("lie");
-}
-
-/**
- * Let the user use/change some implementations.
- */
-module.exports = {
-    Promise: ES6Promise
-};
-
-},{"lie":37}],7:[function(require,module,exports){
 'use strict';
 var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
 
@@ -411,7 +389,7 @@ exports.uncompressWorker = function () {
     return new FlateWorker("Inflate", {});
 };
 
-},{"./stream/GenericWorker":28,"./utils":32,"pako":38}],8:[function(require,module,exports){
+},{"./stream/GenericWorker":27,"./utils":31,"pako":35}],7:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -953,7 +931,7 @@ ZipFileWorker.prototype.lock = function () {
 
 module.exports = ZipFileWorker;
 
-},{"../crc32":4,"../signature":23,"../stream/GenericWorker":28,"../utf8":31,"../utils":32}],9:[function(require,module,exports){
+},{"../crc32":4,"../signature":22,"../stream/GenericWorker":27,"../utf8":30,"../utils":31}],8:[function(require,module,exports){
 'use strict';
 
 var compressions = require('../compressions');
@@ -1012,7 +990,7 @@ exports.generateWorker = function (zip, options, comment) {
     return zipFileWorker;
 };
 
-},{"../compressions":3,"./ZipFileWorker":8}],10:[function(require,module,exports){
+},{"../compressions":3,"./ZipFileWorker":7}],9:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1063,13 +1041,11 @@ JSZip.loadAsync = function (content, options) {
     return new JSZip().loadAsync(content, options);
 };
 
-JSZip.external = require("./external");
 module.exports = JSZip;
 
-},{"./defaults":5,"./external":6,"./load":11,"./object":15,"./support":30}],11:[function(require,module,exports){
+},{"./defaults":5,"./load":10,"./object":14,"./support":29}],10:[function(require,module,exports){
 'use strict';
 var utils = require('./utils');
-var external = require("./external");
 var utf8 = require('./utf8');
 var utils = require('./utils');
 var ZipEntries = require('./zipEntries');
@@ -1082,7 +1058,7 @@ var nodejsUtils = require("./nodejsUtils");
  * @return {Promise} the result.
  */
 function checkEntryCRC32(zipEntry) {
-    return new external.Promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
         var worker = zipEntry.decompressed.getContentWorker().pipe(new Crc32Probe());
         worker.on("error", function (e) {
             reject(e);
@@ -1109,7 +1085,7 @@ module.exports = function(data, options) {
     });
 
     if (nodejsUtils.isNode && nodejsUtils.isStream(data)) {
-        return external.Promise.reject(new Error("JSZip can't accept a stream when loading a zip file."));
+        return Promise.reject(new Error("JSZip can't accept a stream when loading a zip file."));
     }
 
     return utils.prepareContent("the loaded zip file", data, true, options.optimizedBinaryString, options.base64)
@@ -1118,14 +1094,14 @@ module.exports = function(data, options) {
         zipEntries.load(data);
         return zipEntries;
     }).then(function checkCRC32(zipEntries) {
-        var promises = [external.Promise.resolve(zipEntries)];
+        var promises = [Promise.resolve(zipEntries)];
         var files = zipEntries.files;
         if (options.checkCRC32) {
             for (var i = 0; i < files.length; i++) {
                 promises.push(checkEntryCRC32(files[i]));
             }
         }
-        return external.Promise.all(promises);
+        return Promise.all(promises);
     }).then(function addFiles(results) {
         var zipEntries = results.shift();
         var files = zipEntries.files;
@@ -1150,7 +1126,7 @@ module.exports = function(data, options) {
     });
 };
 
-},{"./external":6,"./nodejsUtils":14,"./stream/Crc32Probe":25,"./utf8":31,"./utils":32,"./zipEntries":33}],12:[function(require,module,exports){
+},{"./nodejsUtils":13,"./stream/Crc32Probe":24,"./utf8":30,"./utils":31,"./zipEntries":32}],11:[function(require,module,exports){
 "use strict";
 
 var utils = require('../utils');
@@ -1226,7 +1202,7 @@ NodejsStreamInputAdapter.prototype.resume = function () {
 
 module.exports = NodejsStreamInputAdapter;
 
-},{"../stream/GenericWorker":28,"../utils":32}],13:[function(require,module,exports){
+},{"../stream/GenericWorker":27,"../utils":31}],12:[function(require,module,exports){
 'use strict';
 
 var Readable = require('readable-stream').Readable;
@@ -1270,7 +1246,7 @@ NodejsStreamOutputAdapter.prototype._read = function() {
 
 module.exports = NodejsStreamOutputAdapter;
 
-},{"../utils":32,"readable-stream":16}],14:[function(require,module,exports){
+},{"../utils":31,"readable-stream":15}],13:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -1329,7 +1305,7 @@ module.exports = {
     }
 };
 
-},{}],15:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 var utf8 = require('./utf8');
 var utils = require('./utils');
@@ -1425,7 +1401,7 @@ var fileAdd = function(name, data, originalOptions) {
     object for chaining. Should we break that to allow the user
     to catch the error ?
 
-    return external.Promise.resolve(zipObjectContent)
+    return Promise.resolve(zipObjectContent)
     .then(function () {
         return object;
     });
@@ -1720,7 +1696,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./compressedObject":2,"./defaults":5,"./generate":9,"./nodejs/NodejsStreamInputAdapter":12,"./nodejsUtils":14,"./stream/GenericWorker":28,"./stream/StreamHelper":29,"./utf8":31,"./utils":32,"./zipObject":35}],16:[function(require,module,exports){
+},{"./compressedObject":2,"./defaults":5,"./generate":8,"./nodejs/NodejsStreamInputAdapter":11,"./nodejsUtils":13,"./stream/GenericWorker":27,"./stream/StreamHelper":28,"./utf8":30,"./utils":31,"./zipObject":34}],15:[function(require,module,exports){
 /*
  * This file is used by module bundlers (browserify/webpack/etc) when
  * including a stream implementation. We use "readable-stream" to get a
@@ -1731,7 +1707,7 @@ module.exports = out;
  */
 module.exports = require("stream");
 
-},{"stream":undefined}],17:[function(require,module,exports){
+},{"stream":undefined}],16:[function(require,module,exports){
 'use strict';
 var DataReader = require('./DataReader');
 var utils = require('../utils');
@@ -1790,7 +1766,7 @@ ArrayReader.prototype.readData = function(size) {
 };
 module.exports = ArrayReader;
 
-},{"../utils":32,"./DataReader":18}],18:[function(require,module,exports){
+},{"../utils":31,"./DataReader":17}],17:[function(require,module,exports){
 'use strict';
 var utils = require('../utils');
 
@@ -1908,7 +1884,7 @@ DataReader.prototype = {
 };
 module.exports = DataReader;
 
-},{"../utils":32}],19:[function(require,module,exports){
+},{"../utils":31}],18:[function(require,module,exports){
 'use strict';
 var Uint8ArrayReader = require('./Uint8ArrayReader');
 var utils = require('../utils');
@@ -1929,7 +1905,7 @@ NodeBufferReader.prototype.readData = function(size) {
 };
 module.exports = NodeBufferReader;
 
-},{"../utils":32,"./Uint8ArrayReader":21}],20:[function(require,module,exports){
+},{"../utils":31,"./Uint8ArrayReader":20}],19:[function(require,module,exports){
 'use strict';
 var DataReader = require('./DataReader');
 var utils = require('../utils');
@@ -1969,7 +1945,7 @@ StringReader.prototype.readData = function(size) {
 };
 module.exports = StringReader;
 
-},{"../utils":32,"./DataReader":18}],21:[function(require,module,exports){
+},{"../utils":31,"./DataReader":17}],20:[function(require,module,exports){
 'use strict';
 var ArrayReader = require('./ArrayReader');
 var utils = require('../utils');
@@ -1993,7 +1969,7 @@ Uint8ArrayReader.prototype.readData = function(size) {
 };
 module.exports = Uint8ArrayReader;
 
-},{"../utils":32,"./ArrayReader":17}],22:[function(require,module,exports){
+},{"../utils":31,"./ArrayReader":16}],21:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -2023,7 +1999,7 @@ module.exports = function (data) {
     return new ArrayReader(utils.transformTo("array", data));
 };
 
-},{"../support":30,"../utils":32,"./ArrayReader":17,"./NodeBufferReader":19,"./StringReader":20,"./Uint8ArrayReader":21}],23:[function(require,module,exports){
+},{"../support":29,"../utils":31,"./ArrayReader":16,"./NodeBufferReader":18,"./StringReader":19,"./Uint8ArrayReader":20}],22:[function(require,module,exports){
 'use strict';
 exports.LOCAL_FILE_HEADER = "PK\x03\x04";
 exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
@@ -2032,7 +2008,7 @@ exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
 exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
 exports.DATA_DESCRIPTOR = "PK\x07\x08";
 
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var GenericWorker = require('./GenericWorker');
@@ -2060,7 +2036,7 @@ ConvertWorker.prototype.processChunk = function (chunk) {
 };
 module.exports = ConvertWorker;
 
-},{"../utils":32,"./GenericWorker":28}],25:[function(require,module,exports){
+},{"../utils":31,"./GenericWorker":27}],24:[function(require,module,exports){
 'use strict';
 
 var GenericWorker = require('./GenericWorker');
@@ -2086,7 +2062,7 @@ Crc32Probe.prototype.processChunk = function (chunk) {
 };
 module.exports = Crc32Probe;
 
-},{"../crc32":4,"../utils":32,"./GenericWorker":28}],26:[function(require,module,exports){
+},{"../crc32":4,"../utils":31,"./GenericWorker":27}],25:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -2117,7 +2093,7 @@ DataLengthProbe.prototype.processChunk = function (chunk) {
 module.exports = DataLengthProbe;
 
 
-},{"../utils":32,"./GenericWorker":28}],27:[function(require,module,exports){
+},{"../utils":31,"./GenericWorker":27}],26:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -2235,7 +2211,7 @@ DataWorker.prototype._tick = function() {
 
 module.exports = DataWorker;
 
-},{"../utils":32,"./GenericWorker":28}],28:[function(require,module,exports){
+},{"../utils":31,"./GenericWorker":27}],27:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2500,7 +2476,7 @@ GenericWorker.prototype = {
 
 module.exports = GenericWorker;
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -2508,7 +2484,6 @@ var ConvertWorker = require('./ConvertWorker');
 var GenericWorker = require('./GenericWorker');
 var base64 = require('../base64');
 var support = require("../support");
-var external = require("../external");
 
 var NodejsStreamOutputAdapter = null;
 if (support.nodestream) {
@@ -2529,7 +2504,7 @@ if (support.nodestream) {
 function transformZipOutput(type, content, mimeType) {
     switch(type) {
         case "blob" :
-            return utils.newBlob(utils.transformTo("arraybuffer", content), mimeType);
+            return new Blob([utils.transformTo("arraybuffer", content)], { type: mimeType });
         case "base64" :
             return base64.encode(content);
         default :
@@ -2578,7 +2553,7 @@ function concat (type, dataArray) {
  * @return Promise the promise for the accumulation.
  */
 function accumulate(helper, updateCallback) {
-    return new external.Promise(function (resolve, reject){
+    return new Promise(function (resolve, reject){
         var dataArray = [];
         var chunkType = helper._internalType,
             resultType = helper._outputType,
@@ -2714,7 +2689,7 @@ StreamHelper.prototype = {
 
 module.exports = StreamHelper;
 
-},{"../base64":1,"../external":6,"../nodejs/NodejsStreamOutputAdapter":13,"../support":30,"../utils":32,"./ConvertWorker":24,"./GenericWorker":28}],30:[function(require,module,exports){
+},{"../base64":1,"../nodejs/NodejsStreamOutputAdapter":12,"../support":29,"../utils":31,"./ConvertWorker":23,"./GenericWorker":27}],29:[function(require,module,exports){
 'use strict';
 
 exports.base64 = true;
@@ -2754,7 +2729,7 @@ try {
     exports.nodestream = false;
 }
 
-},{"readable-stream":16}],31:[function(require,module,exports){
+},{"readable-stream":15}],30:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -3031,73 +3006,15 @@ Utf8EncodeWorker.prototype.processChunk = function (chunk) {
 };
 exports.Utf8EncodeWorker = Utf8EncodeWorker;
 
-},{"./nodejsUtils":14,"./stream/GenericWorker":28,"./support":30,"./utils":32}],32:[function(require,module,exports){
+},{"./nodejsUtils":13,"./stream/GenericWorker":27,"./support":29,"./utils":31}],31:[function(require,module,exports){
 'use strict';
 
 var support = require('./support');
 var base64 = require('./base64');
 var nodejsUtils = require('./nodejsUtils');
 var setImmediate = require('set-immediate-shim');
-var external = require("./external");
 
 
-/**
- * Convert a string that pass as a "binary string": it should represent a byte
- * array but may have > 255 char codes. Be sure to take only the first byte
- * and returns the byte array.
- * @param {String} str the string to transform.
- * @return {Array|Uint8Array} the string in a binary format.
- */
-function string2binary(str) {
-    var result = null;
-    if (support.uint8array) {
-      result = new Uint8Array(str.length);
-    } else {
-      result = new Array(str.length);
-    }
-    return stringToArrayLike(str, result);
-}
-
-/**
- * Create a new blob with the given content and the given type.
- * @param {String|ArrayBuffer} part the content to put in the blob. DO NOT use
- * an Uint8Array because the stock browser of android 4 won't accept it (it
- * will be silently converted to a string, "[object Uint8Array]").
- *
- * Use only ONE part to build the blob to avoid a memory leak in IE11 / Edge:
- * when a large amount of Array is used to create the Blob, the amount of
- * memory consumed is nearly 100 times the original data amount.
- *
- * @param {String} type the mime type of the blob.
- * @return {Blob} the created blob.
- */
-exports.newBlob = function(part, type) {
-    exports.checkSupport("blob");
-
-    try {
-        // Blob constructor
-        return new Blob([part], {
-            type: type
-        });
-    }
-    catch (e) {
-
-        try {
-            // deprecated, browser only, old way
-            var Builder = self.BlobBuilder || self.WebKitBlobBuilder || self.MozBlobBuilder || self.MSBlobBuilder;
-            var builder = new Builder();
-            builder.append(part);
-            return builder.getBlob(type);
-        }
-        catch (e) {
-
-            // well, fuck ?!
-            throw new Error("Bug : can't construct the Blob.");
-        }
-    }
-
-
-};
 /**
  * The identity function.
  * @param {Object} input the input.
@@ -3113,7 +3030,8 @@ function identity(input) {
  * @param {Array|ArrayBuffer|Uint8Array|Buffer} array the array to fill in (will be mutated).
  * @return {Array|ArrayBuffer|Uint8Array|Buffer} the updated array.
  */
-function stringToArrayLike(str, array) {
+function stringToArrayLike(str) {
+    const array = new Uint8Array(str.length);
     for (var i = 0; i < str.length; ++i) {
         array[i] = str.charCodeAt(i) & 0xFF;
     }
@@ -3458,13 +3376,13 @@ exports.extend = function() {
 exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinaryString, isBase64) {
 
     // if inputData is already a promise, this flatten it.
-    var promise = external.Promise.resolve(inputData).then(function(data) {
+    var promise = Promise.resolve(inputData).then(function(data) {
         
         
         var isBlob = support.blob && (data instanceof Blob || ['[object File]', '[object Blob]'].indexOf(Object.prototype.toString.call(data)) !== -1);
 
         if (isBlob && typeof FileReader !== "undefined") {
-            return new external.Promise(function (resolve, reject) {
+            return new Promise(function (resolve, reject) {
                 var reader = new FileReader();
 
                 reader.onload = function(e) {
@@ -3484,7 +3402,7 @@ exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinarySt
         var dataType = exports.getTypeOf(data);
 
         if (!dataType) {
-            return external.Promise.reject(
+            return Promise.reject(
                 new Error("Can't read the data of '" + name + "'. Is it " +
                           "in a supported JavaScript type (String, Blob, ArrayBuffer, etc) ?")
             );
@@ -3501,7 +3419,7 @@ exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinarySt
                 if (isOptimizedBinaryString !== true) {
                     // this is a string, not in a base64 format.
                     // Be sure that this is a correct "binary string"
-                    data = string2binary(data);
+                    data = stringToArrayLike(data, new Uint8Array(data.length));
                 }
             }
         }
@@ -3509,7 +3427,7 @@ exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinarySt
     });
 };
 
-},{"./base64":1,"./external":6,"./nodejsUtils":14,"./support":30,"set-immediate-shim":54}],33:[function(require,module,exports){
+},{"./base64":1,"./nodejsUtils":13,"./support":29,"set-immediate-shim":51}],32:[function(require,module,exports){
 'use strict';
 var readerFor = require('./reader/readerFor');
 var utils = require('./utils');
@@ -3773,7 +3691,7 @@ ZipEntries.prototype = {
 // }}} end of ZipEntries
 module.exports = ZipEntries;
 
-},{"./reader/readerFor":22,"./signature":23,"./support":30,"./utf8":31,"./utils":32,"./zipEntry":34}],34:[function(require,module,exports){
+},{"./reader/readerFor":21,"./signature":22,"./support":29,"./utf8":30,"./utils":31,"./zipEntry":33}],33:[function(require,module,exports){
 'use strict';
 var readerFor = require('./reader/readerFor');
 var utils = require('./utils');
@@ -4067,7 +3985,7 @@ ZipEntry.prototype = {
 };
 module.exports = ZipEntry;
 
-},{"./compressedObject":2,"./compressions":3,"./crc32":4,"./reader/readerFor":22,"./support":30,"./utf8":31,"./utils":32}],35:[function(require,module,exports){
+},{"./compressedObject":2,"./compressions":3,"./crc32":4,"./reader/readerFor":21,"./support":29,"./utf8":30,"./utils":31}],34:[function(require,module,exports){
 'use strict';
 
 var StreamHelper = require('./stream/StreamHelper');
@@ -4202,355 +4120,7 @@ for(var i = 0; i < removedMethods.length; i++) {
 }
 module.exports = ZipObject;
 
-},{"./compressedObject":2,"./stream/DataWorker":27,"./stream/GenericWorker":28,"./stream/StreamHelper":29,"./utf8":31}],36:[function(require,module,exports){
-(function (global){
-'use strict';
-var Mutation = global.MutationObserver || global.WebKitMutationObserver;
-
-var scheduleDrain;
-
-{
-  if (Mutation) {
-    var called = 0;
-    var observer = new Mutation(nextTick);
-    var element = global.document.createTextNode('');
-    observer.observe(element, {
-      characterData: true
-    });
-    scheduleDrain = function () {
-      element.data = (called = ++called % 2);
-    };
-  } else if (!global.setImmediate && typeof global.MessageChannel !== 'undefined') {
-    var channel = new global.MessageChannel();
-    channel.port1.onmessage = nextTick;
-    scheduleDrain = function () {
-      channel.port2.postMessage(0);
-    };
-  } else if ('document' in global && 'onreadystatechange' in global.document.createElement('script')) {
-    scheduleDrain = function () {
-
-      // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
-      // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
-      var scriptEl = global.document.createElement('script');
-      scriptEl.onreadystatechange = function () {
-        nextTick();
-
-        scriptEl.onreadystatechange = null;
-        scriptEl.parentNode.removeChild(scriptEl);
-        scriptEl = null;
-      };
-      global.document.documentElement.appendChild(scriptEl);
-    };
-  } else {
-    scheduleDrain = function () {
-      setTimeout(nextTick, 0);
-    };
-  }
-}
-
-var draining;
-var queue = [];
-//named nextTick for less confusing stack traces
-function nextTick() {
-  draining = true;
-  var i, oldQueue;
-  var len = queue.length;
-  while (len) {
-    oldQueue = queue;
-    queue = [];
-    i = -1;
-    while (++i < len) {
-      oldQueue[i]();
-    }
-    len = queue.length;
-  }
-  draining = false;
-}
-
-module.exports = immediate;
-function immediate(task) {
-  if (queue.push(task) === 1 && !draining) {
-    scheduleDrain();
-  }
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],37:[function(require,module,exports){
-'use strict';
-var immediate = require('immediate');
-
-/* istanbul ignore next */
-function INTERNAL() {}
-
-var handlers = {};
-
-var REJECTED = ['REJECTED'];
-var FULFILLED = ['FULFILLED'];
-var PENDING = ['PENDING'];
-
-module.exports = Promise;
-
-function Promise(resolver) {
-  if (typeof resolver !== 'function') {
-    throw new TypeError('resolver must be a function');
-  }
-  this.state = PENDING;
-  this.queue = [];
-  this.outcome = void 0;
-  if (resolver !== INTERNAL) {
-    safelyResolveThenable(this, resolver);
-  }
-}
-
-Promise.prototype["finally"] = function (callback) {
-  if (typeof callback !== 'function') {
-    return this;
-  }
-  var p = this.constructor;
-  return this.then(resolve, reject);
-
-  function resolve(value) {
-    function yes () {
-      return value;
-    }
-    return p.resolve(callback()).then(yes);
-  }
-  function reject(reason) {
-    function no () {
-      throw reason;
-    }
-    return p.resolve(callback()).then(no);
-  }
-};
-Promise.prototype["catch"] = function (onRejected) {
-  return this.then(null, onRejected);
-};
-Promise.prototype.then = function (onFulfilled, onRejected) {
-  if (typeof onFulfilled !== 'function' && this.state === FULFILLED ||
-    typeof onRejected !== 'function' && this.state === REJECTED) {
-    return this;
-  }
-  var promise = new this.constructor(INTERNAL);
-  if (this.state !== PENDING) {
-    var resolver = this.state === FULFILLED ? onFulfilled : onRejected;
-    unwrap(promise, resolver, this.outcome);
-  } else {
-    this.queue.push(new QueueItem(promise, onFulfilled, onRejected));
-  }
-
-  return promise;
-};
-function QueueItem(promise, onFulfilled, onRejected) {
-  this.promise = promise;
-  if (typeof onFulfilled === 'function') {
-    this.onFulfilled = onFulfilled;
-    this.callFulfilled = this.otherCallFulfilled;
-  }
-  if (typeof onRejected === 'function') {
-    this.onRejected = onRejected;
-    this.callRejected = this.otherCallRejected;
-  }
-}
-QueueItem.prototype.callFulfilled = function (value) {
-  handlers.resolve(this.promise, value);
-};
-QueueItem.prototype.otherCallFulfilled = function (value) {
-  unwrap(this.promise, this.onFulfilled, value);
-};
-QueueItem.prototype.callRejected = function (value) {
-  handlers.reject(this.promise, value);
-};
-QueueItem.prototype.otherCallRejected = function (value) {
-  unwrap(this.promise, this.onRejected, value);
-};
-
-function unwrap(promise, func, value) {
-  immediate(function () {
-    var returnValue;
-    try {
-      returnValue = func(value);
-    } catch (e) {
-      return handlers.reject(promise, e);
-    }
-    if (returnValue === promise) {
-      handlers.reject(promise, new TypeError('Cannot resolve promise with itself'));
-    } else {
-      handlers.resolve(promise, returnValue);
-    }
-  });
-}
-
-handlers.resolve = function (self, value) {
-  var result = tryCatch(getThen, value);
-  if (result.status === 'error') {
-    return handlers.reject(self, result.value);
-  }
-  var thenable = result.value;
-
-  if (thenable) {
-    safelyResolveThenable(self, thenable);
-  } else {
-    self.state = FULFILLED;
-    self.outcome = value;
-    var i = -1;
-    var len = self.queue.length;
-    while (++i < len) {
-      self.queue[i].callFulfilled(value);
-    }
-  }
-  return self;
-};
-handlers.reject = function (self, error) {
-  self.state = REJECTED;
-  self.outcome = error;
-  var i = -1;
-  var len = self.queue.length;
-  while (++i < len) {
-    self.queue[i].callRejected(error);
-  }
-  return self;
-};
-
-function getThen(obj) {
-  // Make sure we only access the accessor once as required by the spec
-  var then = obj && obj.then;
-  if (obj && (typeof obj === 'object' || typeof obj === 'function') && typeof then === 'function') {
-    return function appyThen() {
-      then.apply(obj, arguments);
-    };
-  }
-}
-
-function safelyResolveThenable(self, thenable) {
-  // Either fulfill, reject or reject with error
-  var called = false;
-  function onError(value) {
-    if (called) {
-      return;
-    }
-    called = true;
-    handlers.reject(self, value);
-  }
-
-  function onSuccess(value) {
-    if (called) {
-      return;
-    }
-    called = true;
-    handlers.resolve(self, value);
-  }
-
-  function tryToUnwrap() {
-    thenable(onSuccess, onError);
-  }
-
-  var result = tryCatch(tryToUnwrap);
-  if (result.status === 'error') {
-    onError(result.value);
-  }
-}
-
-function tryCatch(func, value) {
-  var out = {};
-  try {
-    out.value = func(value);
-    out.status = 'success';
-  } catch (e) {
-    out.status = 'error';
-    out.value = e;
-  }
-  return out;
-}
-
-Promise.resolve = resolve;
-function resolve(value) {
-  if (value instanceof this) {
-    return value;
-  }
-  return handlers.resolve(new this(INTERNAL), value);
-}
-
-Promise.reject = reject;
-function reject(reason) {
-  var promise = new this(INTERNAL);
-  return handlers.reject(promise, reason);
-}
-
-Promise.all = all;
-function all(iterable) {
-  var self = this;
-  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
-    return this.reject(new TypeError('must be an array'));
-  }
-
-  var len = iterable.length;
-  var called = false;
-  if (!len) {
-    return this.resolve([]);
-  }
-
-  var values = new Array(len);
-  var resolved = 0;
-  var i = -1;
-  var promise = new this(INTERNAL);
-
-  while (++i < len) {
-    allResolver(iterable[i], i);
-  }
-  return promise;
-  function allResolver(value, i) {
-    self.resolve(value).then(resolveFromAll, function (error) {
-      if (!called) {
-        called = true;
-        handlers.reject(promise, error);
-      }
-    });
-    function resolveFromAll(outValue) {
-      values[i] = outValue;
-      if (++resolved === len && !called) {
-        called = true;
-        handlers.resolve(promise, values);
-      }
-    }
-  }
-}
-
-Promise.race = race;
-function race(iterable) {
-  var self = this;
-  if (Object.prototype.toString.call(iterable) !== '[object Array]') {
-    return this.reject(new TypeError('must be an array'));
-  }
-
-  var len = iterable.length;
-  var called = false;
-  if (!len) {
-    return this.resolve([]);
-  }
-
-  var i = -1;
-  var promise = new this(INTERNAL);
-
-  while (++i < len) {
-    resolver(iterable[i]);
-  }
-  return promise;
-  function resolver(value) {
-    self.resolve(value).then(function (response) {
-      if (!called) {
-        called = true;
-        handlers.resolve(promise, response);
-      }
-    }, function (error) {
-      if (!called) {
-        called = true;
-        handlers.reject(promise, error);
-      }
-    });
-  }
-}
-
-},{"immediate":36}],38:[function(require,module,exports){
+},{"./compressedObject":2,"./stream/DataWorker":26,"./stream/GenericWorker":27,"./stream/StreamHelper":28,"./utf8":30}],35:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -4566,7 +4136,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":39,"./lib/inflate":40,"./lib/utils/common":41,"./lib/zlib/constants":44}],39:[function(require,module,exports){
+},{"./lib/deflate":36,"./lib/inflate":37,"./lib/utils/common":38,"./lib/zlib/constants":41}],36:[function(require,module,exports){
 'use strict';
 
 
@@ -4968,7 +4538,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":41,"./utils/strings":42,"./zlib/deflate":46,"./zlib/messages":51,"./zlib/zstream":53}],40:[function(require,module,exports){
+},{"./utils/common":38,"./utils/strings":39,"./zlib/deflate":43,"./zlib/messages":48,"./zlib/zstream":50}],37:[function(require,module,exports){
 'use strict';
 
 
@@ -5388,7 +4958,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":41,"./utils/strings":42,"./zlib/constants":44,"./zlib/gzheader":47,"./zlib/inflate":49,"./zlib/messages":51,"./zlib/zstream":53}],41:[function(require,module,exports){
+},{"./utils/common":38,"./utils/strings":39,"./zlib/constants":41,"./zlib/gzheader":44,"./zlib/inflate":46,"./zlib/messages":48,"./zlib/zstream":50}],38:[function(require,module,exports){
 'use strict';
 
 
@@ -5492,7 +5062,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],42:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -5679,7 +5249,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":41}],43:[function(require,module,exports){
+},{"./common":38}],40:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -5732,7 +5302,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],44:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -5802,7 +5372,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],45:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -5863,7 +5433,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],46:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -7739,7 +7309,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":41,"./adler32":43,"./crc32":45,"./messages":51,"./trees":52}],47:[function(require,module,exports){
+},{"../utils/common":38,"./adler32":40,"./crc32":42,"./messages":48,"./trees":49}],44:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -7799,7 +7369,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],48:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -8146,7 +7716,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],49:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -9704,7 +9274,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":41,"./adler32":43,"./crc32":45,"./inffast":48,"./inftrees":50}],50:[function(require,module,exports){
+},{"../utils/common":38,"./adler32":40,"./crc32":42,"./inffast":45,"./inftrees":47}],47:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -10049,7 +9619,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":41}],51:[function(require,module,exports){
+},{"../utils/common":38}],48:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -10083,7 +9653,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],52:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -11305,7 +10875,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":41}],53:[function(require,module,exports){
+},{"../utils/common":38}],50:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -11354,7 +10924,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],54:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 module.exports = typeof setImmediate === 'function' ? setImmediate :
 	function setImmediate() {
@@ -11363,5 +10933,5 @@ module.exports = typeof setImmediate === 'function' ? setImmediate :
 		setTimeout.apply(null, args);
 	};
 
-},{}]},{},[10])(10)
+},{}]},{},[9])(9)
 });

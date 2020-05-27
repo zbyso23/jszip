@@ -444,7 +444,7 @@ QUnit.module("file", function () {
 
     QUnit.test("add file: file(name, polyfill Promise[string] as binary)", function (assert) {
         var str2promise = function (str) {
-            return new JSZip.external.Promise(function(resolve, reject) {
+            return new Promise(function(resolve, reject) {
                 setTimeout(function () {
                     resolve(str);
                 }, 10);
@@ -457,7 +457,7 @@ QUnit.module("file", function () {
 
     QUnit.test("add file: file(name, polyfill Promise[string] force text)", function (assert) {
         var str2promise = function (str) {
-            return new JSZip.external.Promise(function(resolve, reject) {
+            return new Promise(function(resolve, reject) {
                 setTimeout(function () {
                     resolve(str);
                 }, 10);
@@ -468,35 +468,10 @@ QUnit.module("file", function () {
         testFileDataGetters(assert, {name : "utf8", zip : zip, textData : "€15\n", rawData : "\xE2\x82\xAC15\n"});
     });
 
-    /*
-     * Fix #325 for this one
-     *
-    QUnit.test("add file: file(name, polyfill Promise[string] as text)", function (assert) {
-        var str2promise = function (str) {
-            return new JSZip.external.Promise(function(resolve, reject) {
-                setTimeout(function () {
-                    resolve(str);
-                }, 10);
-            });
-        };
-        var zip = new JSZip();
-        zip.file("file.txt", str2promise("€15\n"));
-        testFileDataGetters(assert, {name : "utf8", zip : zip, textData : "€15\n", rawData : "\xE2\x82\xAC15\n"});
-
-        zip = new JSZip();
-        zip.file("file.txt", str2promise("test\r\ntest\r\n"));
-        testFileDataGetters(assert, {name : "\\r\\n", zip : zip, textData : "test\r\ntest\r\n"});
-
-        zip = new JSZip();
-        zip.file("file.txt", str2promise(""));
-        testFileDataGetters(assert, {name : "empty content", zip : zip, textData : ""});
-    });
-   */
-
     if (JSZip.support.blob) {
         QUnit.test("add file: file(name, polyfill Promise[Blob])", function (assert) {
             var str2promiseOfBlob = function (str) {
-                return new JSZip.external.Promise(function(resolve, reject) {
+                return new Promise(function(resolve, reject) {
                     setTimeout(function () {
                         resolve(str2blob(str));
                     }, 10);

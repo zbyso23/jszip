@@ -258,9 +258,6 @@ interface JSZip {
 
     prototype: JSZip;
     support: JSZipSupport;
-    external: {
-        Promise: PromiseConstructorLike;
-    };
     version: string;
 }
 
